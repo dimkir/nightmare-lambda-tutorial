@@ -1,0 +1,12 @@
+/tmp/
+/node_modules/
+/dist/
+
+/var/dist/*
+!/var/dist/.gitkeep
+/var/log/*
+!/var/log/.gitkeep
+#/var/*
+
+
+*.bak
