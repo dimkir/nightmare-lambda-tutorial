@@ -17,13 +17,13 @@
  ***********************************************************/
 console.log('Lambda executes global code upon container boot-up');
 
-var electronPath, pack, isOnLambda, Xvfb;
+var electronPath, binaryPack, isOnLambda, Xvfb;
 
-pack       = require('./lib/bootstrap/nightmare-lambda-pack');
-isOnLambda = pack.isOnLambda;
+binaryPack = require('./lib/bootstrap/nightmare-lambda-pack');
+isOnLambda = binaryPack.isOnLambda;
 Xvfb       = require('./lib/bootstrap/xvfb');
 if ( isOnLambda ){
-    electronPath = pack.installNightmare(); 
+    electronPath = binaryPack.installNightmare(); 
 }
 
 
@@ -47,7 +47,7 @@ exports.handler = function(event, context){
     
     url = event.url;
 
-    console.log(pack._df()); // let's log `df -h` current disk usage
+    console.log(binaryPack._df()); // let's log `df -h` current disk usage
 
     xvfb = new Xvfb({
         xvfb_executable : '/tmp/pck/Xvfb' // path to Xvfb deployed from nightmare-lambda-pack
