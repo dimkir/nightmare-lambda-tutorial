@@ -22,7 +22,7 @@ You would typically start writing source for your lambda function on local devel
 > command line utility which you can install on your dev machine via  `npm install -g lambda-local`. 
 
 
-```
+```js
 
 // index.js 
 var Nightmare = require('nightmare');       
@@ -53,7 +53,7 @@ exports.handler = function(event, context){
 ```
 
 
-#### Problem with missing Electron dependencies
+## Problem with missing Electron dependencies
 Although this approach seems trivial, there's a bit of magic involved. 
 In particular `npm install` will _not_ only install JavaScript sources for the dependencies, 
 but also binary dependencies. And because Nightmare relies heavily on [Electron](http://electron.atom.io) under the hood, 
@@ -73,7 +73,7 @@ So Electron requires:
 The solution was to [pick and compile](https://gist.github.com/dimkir/f4afde77366ff041b66d2252b45a13db) libraries manually 
 and deliver them to Lambda for execution.
 
-#### Lambda has limit to zip-package size
+## Lambda has limit to zip-package size
 When we first bundled all the missing libraries into a zip-file to upload to Lambda, it turned out `58 Mb` 
 whilst [Lambda has limit](http://docs.aws.amazon.com/lambda/latest/dg/limits.html) of `50 Mb` maximum for function zip-file.
 
@@ -102,16 +102,16 @@ Here you can find packages for your region:
  - Hosted on `us-west-1` TBD
 
 
-#### But Nightmare requires display buffer (at least virtual) which Lambda does not have!
+## But Nightmare requires display buffer (at least virtual) which Lambda does not have!
 
 Usually virtual framebuffer is added on headless machines via running `Xvfb` before running actual program which 
 requires display via `xvfb-run.sh` or as a background daemon. However for Lambda we will use [xvfb package](https://www.npmjs.com/package/xvfb)
 to run `Xvfb` before we run Nightmare and to cleanly close `Xvfb` after we have finished execution.
 
-```
+```js
 var Xvfb = require('./lib/bootstrap/xvfb');
 
-...
+// ...
 
 exports.handler = function(event, context){
 
@@ -136,7 +136,7 @@ var xvfb = new Xvfb({ xvfb_executable: '/tmp/pck/Xvfb' }); // this is location o
 
 }
 
-...
+// ...
 
 
 ```
@@ -145,25 +145,25 @@ var xvfb = new Xvfb({ xvfb_executable: '/tmp/pck/Xvfb' }); // this is location o
 
 
 
-## TL;DR;
+# TL;DR;
 
 
 
 
-#### Install packages
+## Install packages
 ```
 npm install nightmare nightmare-lambda-pack
 ```
 
 
-#### Write your lambda function source code
+## Write your lambda function source code
 
 When writing your lambda logic, you will have to add binary pack installation line outside of the event handler
 and wrap actual logic within  in xvfb.start() callback (and remember to call xvfb.stop()). 
 
 After you've completed those steps your source would look like this:
 
-```
+```js
 var binaryPack = require('./lib/bootstrap/nightmare-lambda-pack');
 var Nightmare = require('nightmare');
 
@@ -218,7 +218,7 @@ var xvfb = new Xvfb({ xvfb_executable: '/tmp/pck/Xvfb' }); // this is location o
 
 
 
-#### Create lambda function zip-package
+## Create lambda function zip-package
 
 
 Usually for simplicity sake you would create zip file in the following manner
@@ -277,7 +277,7 @@ However for more in-depth work with lambda functions in this tutorial we have cr
 #### Invoke your lambda function
 
 ```
-aws lambda invoke --function-name nightmare-tutorial --payload {} result.log
+aws lambda invoke --function-name YOUR-FUNCTION-NAME --payload {} result.log
 ```
 
 
