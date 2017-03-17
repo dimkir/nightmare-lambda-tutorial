@@ -102,7 +102,7 @@ Here you can find packages for your region:
  - Hosted on `us-west-1` TBD
 
 
-## But Nightmare requires display buffer (at least virtual) which Lambda does not have!
+## Adding virtual display framebuffer to Lambda (Xvfb)
 
 Usually virtual framebuffer is added on headless machines via running `Xvfb` before running actual program which 
 requires display via `xvfb-run.sh` or as a background daemon. However for Lambda we will use [xvfb package](https://www.npmjs.com/package/xvfb)
@@ -243,7 +243,7 @@ zip -r nightmare-tutorial-function.zip index.js lib node_modules \
 ```
 
 
-#### Create your Lambda function on AWS 
+## Create your Lambda function on AWS 
 
 Now as you have zip-file with your lambda source, you are ready to 
 create lambda function on AWS. 
@@ -274,7 +274,7 @@ However for more in-depth work with lambda functions in this tutorial we have cr
 [Tools and Instructions how to create and update lambda functions using pure AWS CLI](docs/CREATE-LAMBDA-FUNCTION-USING-AWS-CLI.md)
 
 
-#### Invoke your lambda function
+## Invoke your lambda function
 
 ```
 aws lambda invoke --function-name YOUR-FUNCTION-NAME --payload {} result.log
