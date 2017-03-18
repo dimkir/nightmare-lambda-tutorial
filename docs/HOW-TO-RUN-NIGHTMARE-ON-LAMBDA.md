@@ -202,26 +202,38 @@ Now as you know how the solution works, see below simple instructions to make it
 # TL;DR;
 
 
-## Install packages
+## Install dependencies
 
+
+> WIP! In order to complete this tutorial, we need to publish `nightmare-lambda-pack` npm package and 
+> get our PR merged into `xvfb` package creator. (or create fork). After those steps completed
+> we would be able to use the following installation line: `npm install nightmare nightmare-lambda-pack xvfb`.
+> However for the moment we have to pull dev versions of those files via wget.
 
 ```
-npm install nightmare nightmare-lambda-pack xvfb
+cd my-lambda-tutorial
+npm init -y
+npm install nightmare 
+mkdir -p lib/bootstrap
+wget -O lib/bootstrap/nightmare-lambda-pack.js https://raw.githubusercontent.com/dimkir/nightmare-lambda-tutorial/master/lib/bootstrap/nightmare-lambda-pack.js
+wget -O lib/bootstrap/xvfb.js https://raw.githubusercontent.com/dimkir/nightmare-lambda-tutorial/master/lib/bootstrap/xvfb.js
+
+
 ```
 
 
 ## Write your lambda function source code
 
 When writing your lambda logic, you will have to add binary pack installation line outside of the event handler
-and wrap actual logic within  callback to `xvfb.start()`  (and remember to call `xvfb.stop()`). 
+and wrap actual application logic within  callback to `xvfb.start()`  (and remember to call `xvfb.stop()`). 
 
 After you've completed those steps your source would look like this:
 
 ```js
 
 var 
-  binaryPack = require('./lib/bootstrap/nightmare-lambda-pack'),
-  Xvfb       = require('./lib/bootstrap/xvfb'),
+  binaryPack = require('./lib/bootstrap/nightmare-lambda-pack'), // WIP: should be `require('nightmare-lambda-pack')`
+  Xvfb       = require('./lib/bootstrap/xvfb'),                  // WIP: should be `require('xvfb')`
   Nightmare  = require('nightmare')
 ;
 
@@ -280,27 +292,30 @@ exports.handler = function(event, context){
 
 ## Create lambda function zip-package
 
-
-Usually for simplicity sake you would create zip file in the following manner
-```
-zip -r nightmare-tutorial-function.zip index.js lib node_modules
-```
-
-However this will include distribution of Electron which is only good to run on your local machine. So on Lambda we do not 
-need it. This is why we can exclude `node_modules/nightmare/node_modules/electron/dist` folder:
+Let's create deployment package:
 
 ```
-zip -r nightmare-tutorial-function.zip index.js lib node_modules \
-   -x '*node_modules/nightmare/node_modules/electron/dist*'
+zip -r nightmare-tutorial-function.zip index.js lib node_modules -x '*electron/dist*' 
+ls -lh *.zip
 ```
 
-or you can get by with a shorter version
+The resulting zip package should be 3-4Mb in size.
+
+Not that we add `-x '*electron/dist*' option to exclude 
+`node_modules/nightmare/node_modules/electron/dist` 
+subfolder which has heavy electron binaries, which are of no use when pushed to AWS Lambda environment.
 
 
-```
-zip -r nightmare-tutorial-function.zip index.js lib node_modules \
-   -x '*electron/dist*' 
-```
+
+>Note that `'*electron/dist*'` pattern will exclude any filepath (eg. `selectron/distrib`), so 
+> if any of your direct or transitive dependency names happen to collide with this pattern, simply use 
+> longer version of the exclusion pattern:
+>```
+>zip -r nightmare-tutorial-function.zip index.js lib node_modules \
+>   -x '*node_modules/nightmare/node_modules/electron/dist*'
+>```
+>
+>
 
 
 ## Create your Lambda function on AWS 
@@ -312,6 +327,8 @@ We are going to create function with the following parameters:
 
   - Runtime `node4.3`
   - Memory size `1GB` (Selecting `1GB` of memory would automatically match up with faster instance which will unzip binary package in a jiffy)
+  - Timeout of `60` seconds (Downloading & installing Electron along with Xvfb and running Nightmare crawl of the site will take longer than default timeout of 3 seconds. We recommend 60 or at least 30 seconds).
+  - Deployment package zip from the previous step
 
 
 There are  many ways you can create lambda function on AWS
@@ -319,26 +336,88 @@ There are  many ways you can create lambda function on AWS
   - AWS CLI
   - Cloud Formation
 
-
-To follow this tutorial quickly we recommend to actually use this quick Cloud Formation based script.
-For both approaches you will need to [install AWS CLI and obtain credentials](docs/INSTALL-AWS-CLI.md)
+In order to help you get up and running with your lambda function quickly, we have prepared a simple standalone helper script
+`lambda-install-aws.sh`, which you can put into your projects directory.
 
 ```
- TBD 
- ./create-lambda-aws
- ./delete-lambda-aws # to delete function
+wget -o lambda-install-aws.sh https://raw.githubusercontent.com/dimkir/nightmare-lambda-tutorial/master/bin/install/lambda-install-aws.sh
 ```
 
+Now edit this script "Settings" section and set up your unique function name and region.
 
-However for more in-depth work with lambda functions in this tutorial we have created 
-[Tools and Instructions how to create and update lambda functions using pure AWS CLI](docs/CREATE-LAMBDA-FUNCTION-USING-AWS-CLI.md)
+```
+#############
+#  Settings
+#############
+
+FUNCTION=nightmare-tut-hello
+REGION=eu-west-1
+DEPLOYMENT_PACKAGE_ZIP=nightmare-tutorial.zip
+
+```
+
+In order to run this script you need AWS CLI installed and credentials configured.
+
+> Keep in mind that AWS permissions for initial creation of Lambda function should be relatively broad. 
+> Because creation of lambda function requires usage of AWS IAM to create role and policy and later AWS Lambda to create function and configuration.
+> If you use managed policies I would recommend Administrator as PowerUser won't be enough.
+
+
+Now let's create our function on AWS:
+
+```
+./lambda-install-aws.sh
+```
+
+And you will get output like this:
+
+```
+[my-nightmare-tutorial]2$ ./lambda-install-aws.sh 
+>>> Creating execution role ...
+    Execution role name: [nightmare-tut-hello-lambda-execution-role]
+    Execution role arn: [arn:aws:iam::326625058526:role/nightmare-tut-hello-lambda-execution-role]
+>>> Creating execution policy...
+>>> Creating lambda function...
+{
+    "CodeSha256": "nulOwznG/Cm9OaNvglEJedqL9OuFfUNPOznhE4cZMFs=", 
+    "FunctionName": "nightmare-tut-hello", 
+    "CodeSize": 3658846, 
+    "MemorySize": 1024, 
+    "FunctionArn": "arn:aws:lambda:eu-west-1:326625058526:function:nightmare-tut-hello", 
+    "Version": "$LATEST", 
+    "Role": "arn:aws:iam::326625058526:role/nightmare-tut-hello-lambda-execution-role", 
+    "Timeout": 60, 
+    "LastModified": "2017-03-18T12:53:21.106+0000", 
+    "Handler": "index.handler", 
+    "Runtime": "nodejs4.3", 
+    "Description": ""
+}
+
+```
+
 
 
 ## Invoke your lambda function
 
+We can use AWS CLI to invoke lambda and will pass two parameters: `done.log` 
+will hold the result of call to `context.done()` 
+and as payload we will send empty event `{}`
+
+
 ```
-aws lambda invoke --function-name YOUR-FUNCTION-NAME --payload {} result.log
+[my-nightmare-tutorial]$ aws lambda invoke --function-name nightmare-tut-hello --payload {} done.log
+{
+    "StatusCode": 200
+}
+
+echo ; cat done.log ; echo
+
+# if everything worked well, you will see similar url
+"https://github.com/segmentio/nightmare"
+
 ```
+
+
 
 
 
