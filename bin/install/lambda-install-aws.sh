@@ -6,7 +6,7 @@
 
 FUNCTION=nightmare-tut-hello
 REGION=eu-west-1
-DEPLOYMENT_PACKAGE_ZIP=nightmare-tutorial-function.zip
+DEPLOYMENT_PACKAGE_ZIP=deployment-package.zip
 
 
 
