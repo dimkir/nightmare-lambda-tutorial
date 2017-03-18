@@ -1,6 +1,8 @@
-We expect you already run Nightmare on your dev machine or on build/test server (like AWS EC2). 
+We expect you already run Nightmare on your dev machine or build/test server (like AWS EC2). 
 But now, you want to avoid all the hassle of maintaining servers
-and run Nightmare on AWS Lambda serverlessly. We recommend to try Quick Start, but later be sure to read
+and run Nightmare serverless on AWS Lambda. 
+
+We recommend to try Quick Start, but later _be sure_ to read
 the full story, as it has important info to help you debug and understand behavior of your lambda functions.
 
 # Quick Start
@@ -166,7 +168,8 @@ DEPLOYMENT_PACKAGE_ZIP=deployment-package.zip
 In order to run this script you need AWS CLI installed and credentials configured.
 
 > Keep in mind that AWS permissions for initial creation of Lambda function should be relatively broad. 
-> Because creation of lambda function requires usage of AWS IAM to create role and policy and later AWS Lambda to create function and configuration.
+> Because creation of lambda function requires permissions forAWS IAM to create role and policy and later permissions for AWS Lambda 
+> to create function and configuration.
 > If you use managed policies I would recommend Administrator as PowerUser won't be enough.
 
 
@@ -179,7 +182,7 @@ Now let's create our function on AWS:
 And you will get output like this:
 
 ```
-[my-nightmare-tutorial]2$ ./lambda-install-aws.sh 
+[nightmare-tut-hello]$ ./lambda-install-aws.sh 
 >>> Creating execution role ...
     Execution role name: [nightmare-tut-hello-lambda-execution-role]
     Execution role arn: [arn:aws:iam::326625058526:role/nightmare-tut-hello-lambda-execution-role]
