@@ -176,6 +176,7 @@ In order to run this script you need AWS CLI installed and credentials configure
 Now let's create our function on AWS:
 
 ```
+chmod +x lambda-install-aws.sh
 ./lambda-install-aws.sh
 ```
 
