@@ -11,7 +11,7 @@ fi
 if [ "$#" -ne "1" ]; then
  echo
  echo "Usage: "
- echo 
+ echo
  echo "   $(basename $0) <http(s)-website-url>"
  echo
  exit 1
@@ -24,10 +24,11 @@ LOG_FILE="var/log/log-$(date +"%Y%m%d------%H-%M--%S").json"
 aws lambda invoke \
     --function-name $PROJECT_NAME \
     --payload "{ \"url\" : \"$URL\" }" \
-    $LOG_FILE 
+    $LOG_FILE
 
 RETVAL=$?
 
 echo "Returned with retval [$RETVAL]"
 
-cat $LOG_FILE | jq .web && echo "JQ returned $?"
+cat $LOG_FILE
+echo
