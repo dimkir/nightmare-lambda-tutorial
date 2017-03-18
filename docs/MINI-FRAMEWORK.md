@@ -1,4 +1,4 @@
-How to run NightmareJS on AWS Lambda
+How to use mini framework "Nightmare Tutorial" to develop run and test Nightmare scripts on Lambda
 =====
 
 
