@@ -1,9 +1,13 @@
-You probably already run Nightmare on your dev machine or on some kind of build or test server (like AWS EC2). 
-But now, you are reading this guide because you have decide to avoid all the hassle of maintaining servers
-and run Nightmare on AWS Lambda serverlessly.
+We expect you already run Nightmare on your dev machine or on build/test server (like AWS EC2). 
+But now, you want to avoid all the hassle of maintaining servers
+and run Nightmare on AWS Lambda serverlessly. We recommend to try Quick Start, but later be sure to read
+the full story, as it has important info to help you debug and understand behavior of your lambda functions.
 
 # Quick Start
 
+
+## Pick a name for your lambda function
+Throughout this guide we will use name of function `nightmare-tut-hello` so be sure to adjust command line arguments in case you use different name.
 
 ## Install dependencies
 
@@ -14,7 +18,7 @@ and run Nightmare on AWS Lambda serverlessly.
 > However for the moment we have to pull dev versions of those files via wget.
 
 ```
-cd my-lambda-tutorial
+cd nightmare-tut-hello
 npm init -y
 npm install nightmare 
 mkdir -p lib/bootstrap
@@ -98,7 +102,7 @@ exports.handler = function(event, context){
 Let's create deployment package:
 
 ```
-zip -r nightmare-tutorial-function.zip index.js lib node_modules -x '*electron/dist*' 
+zip -r deployment-package.zip index.js lib node_modules -x '*electron/dist*' 
 ls -lh *.zip
 ```
 
@@ -114,7 +118,7 @@ subfolder which has heavy electron binaries, which are of no use when pushed to 
 > if any of your direct or transitive dependency names happen to collide with this pattern, simply use 
 > longer version of the exclusion pattern:
 >```
->zip -r nightmare-tutorial-function.zip index.js lib node_modules \
+>zip -r deployment-package.zip index.js lib node_modules \
 >   -x '*node_modules/nightmare/node_modules/electron/dist*'
 >```
 >
@@ -143,7 +147,7 @@ In order to help you get up and running with your lambda function quickly, we ha
 `lambda-install-aws.sh`, which you can put into your projects directory.
 
 ```
-wget -o lambda-install-aws.sh https://raw.githubusercontent.com/dimkir/nightmare-lambda-tutorial/master/bin/install/lambda-install-aws.sh
+wget -O lambda-install-aws.sh https://raw.githubusercontent.com/dimkir/nightmare-lambda-tutorial/master/bin/install/lambda-install-aws.sh
 ```
 
 Now edit this script "Settings" section and set up your unique function name and region.
@@ -153,9 +157,9 @@ Now edit this script "Settings" section and set up your unique function name and
 #  Settings
 #############
 
-FUNCTION=nightmare-tut-hello
+FUNCTION=nightmare-tut-hello 
 REGION=eu-west-1
-DEPLOYMENT_PACKAGE_ZIP=nightmare-tutorial.zip
+DEPLOYMENT_PACKAGE_ZIP=deployment-package.zip
 
 ```
 
@@ -208,21 +212,32 @@ and as payload we will send empty event `{}`
 
 
 ```
-[my-nightmare-tutorial]$ aws lambda invoke --function-name nightmare-tut-hello --payload {} done.log
+aws lambda invoke --function-name nightmare-tut-hello --payload {} done.log
+
+```
+
+And in case of success you would get code 200
+```
 {
     "StatusCode": 200
 }
+```
 
-echo ; cat done.log ; echo
+Inspect result(or error) examine contents of the `done.log` file:
 
-# if everything worked well, you will see similar url
+```
+cat done.log
+```
+
+
+if everything worked well, you will see segment url as a result. In case of error you may get `null` or error object.
+```
 "https://github.com/segmentio/nightmare"
-
 ```
 
 
 
-## How did we make Nightmare work on Lambda - The Full Picture
+# How did we make Nightmare work on Lambda - The Full Picture
 
 
 Lambda is amazing, but this awesomeness comes at cost of few restrictions and limitations. 
