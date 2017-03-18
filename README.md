@@ -436,10 +436,6 @@ exports.handler = function(event, context){
 };
 ```
 
-Now as you know how the solution works, see below simple instructions to make it work:
-
-
-
 
 
 
