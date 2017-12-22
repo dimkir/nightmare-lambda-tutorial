@@ -1,14 +1,37 @@
-We expect you already run Nightmare on your dev machine or build/test server (like AWS EC2). 
-But now, you want to avoid all the hassle of maintaining servers
-and run Nightmare serverless on AWS Lambda. 
+# NightmareJS on Lambda
 
-We recommend to try Quick Start, but later _be sure_ to read
-the full story, as it has important info to help you debug and understand behavior of your lambda functions.
+## Intro
+ - you already run Nightmare on your dev machine
+ - you already run Nightmare on build/test server (like EC2)
+ - you want to run Nightmare on Lambda
+ - read [Quick Start](#quick-start) (and do some copy/pasting)
+ - when in trouble read [Making Nightmare Work on Lambda - Full picture](#how-did-we-make-nightmare-work-on-lambda---the-full-picture)
+
+**UPDATE: 2017-December 22nd**
+ - Electron binary pack is [now hosted at Github Releases](https://github.com/dimkir/nightmare-lambda-tutorial/releases/download/v0.5/nightmare-lambda-pck-with-xvfb-20170313-1726-43.zip) by default 
+ - this tutorial now has section on [Self Hosting Electron](#self-hosting-electron)
+
+If your script broke on December 22nd, download the latest version of `nightmare-lambda-pack.js` or manually edit line 21 of  `nightmare-lambda-pack.js`:
+```
+ // ...
+    defaultElectronPackageUrl: 'https://github.com/dimkir/nightmare-lambda-tutorial/releases/download/v0.5/nightmare-lambda-pck-with-xvfb-20170313-1726-43.zip',
+ // ...
+```
+
 
 # Quick Start
 
+* [Pick a name for your lambda function](#pick-a-name-for-your-lambda-function)
+* [Install dependencies](#install-dependencies)
+* [Write your lambda function source code](#write-your-lambda-function-source-code)
+* [Create lambda function zip-package](#create-lambda-function-zip-package)
+* [Create your Lambda function on AWS](#create-your-lambda-function-on-aws)
+* [Invoke your lambda function](#invoke-your-lambda-function)
+* [Self hosting electron](#self-hosting-electron)
+
 
 ## Pick a name for your lambda function
+
 Throughout this guide we will use name of function `nightmare-tut-hello` so be sure to adjust command line arguments in case you use different name.
 
 ## Install dependencies
@@ -240,8 +263,41 @@ if everything worked well, you will see segment url as a result. In case of erro
 ```
 
 
+## Self hosting electron
 
+Currently the specially prepared [electron binary](https://github.com/dimkir/nightmare-lambda-tutorial/releases/download/v0.5/nightmare-lambda-pck-with-xvfb-20170313-1726-43.zip) is hosted on Github Releases (which as of day of this writing is hosted in `us-east-1`). The electron binary has to be downloaded by lambda upon every container warmup. This means that if your lambda runs in `us-east-1` the downloads would be lightning fast. Whereas if your lambda is in farther region, it may take 5-20 seconds to download it. 
+
+
+Self hosting electron binary will speed up your lambdas **and is highly recommended**. Self hosting is easy - just upload the electron binary into your S3 bucket in the same region as lambda and modify call to `.installNightmare()` as shown below:
+
+> After uploading electron binary to S3, make sure that lambda has permissions to access this file.
+
+
+```
+// ....
+
+if ( isOnLambda ){
+    electronPath = binaryPack.installNightmare({
+        electronPackageUrl : 
+        'https://s3-YOUR-REGION.amazonaws.com/YOUR-BUCKET/nightmare-lambda-pck-with-xvfb-20170313-1726-43.zip'
+    }; 
+}
+
+
+// ....
+```
+
+
+  
+  
 # How did we make Nightmare work on Lambda - The Full Picture
+
+
+* [The vanilla approach which won't work on Lambda](#the-vanilla-approach-which-wont-work-on-lambda)
+* [Problem with missing Electron dependencies](#problem-with-missing-electron-dependencies)
+* [Lambda has limit to zip-package size](#lambda-has-limit-to-zip-package-size)
+* [Adding virtual display framebuffer to Lambda (Xvfb)](#adding-virtual-display-framebuffer-to-lambda-xvfb)
+* [Code sample for final solution](#code-sample-for-final-solution)
 
 
 Lambda is amazing, but this awesomeness comes at cost of few restrictions and limitations. 
@@ -254,11 +310,11 @@ will help you develop intuition for running Nightmare on Lambda.
 ## The vanilla approach which won't work on Lambda
 
 You would typically start writing source for your lambda function on local development machine following those steps:
- 
- 1. Install Nightmare `npm install nightmare` 
- 2. Create `index.js` (source below)
- 3. Create dummy event file to test lambda `echo {} > event.json` 
- 4. Run `lambda-local -l index.js  -e event.json --timeout 30`  
+
+    1. Install Nightmare `npm install nightmare` 
+    2. Create `index.js` (source below)
+    3. Create dummy event file to test lambda `echo {} > event.json` 
+    4. Run `lambda-local -l index.js  -e event.json --timeout 30`  
 
 > To run lambda on local machine with ease, we will use  [lambda-local](https://www.npmjs.com/package/lambda-local)
 > command line utility which you can install on your dev machine via  `npm install -g lambda-local`. 
@@ -322,7 +378,7 @@ whilst [Lambda has limit](http://docs.aws.amazon.com/lambda/latest/dg/limits.htm
 
 The solution was simple - to package all the required binaries into a zip file and make it available on S3 in the region where your
 function runs. Your lambda function should download the binary package to `/tmp` directory before each execution and unzip it.
- 
+
 This is why in the head of your lambda function you must use: 
 
 ```js
@@ -344,8 +400,9 @@ machine it will do nothing. So you can run lambda function locally with `lambda-
 
 If you want to inspect the binary Nightmare package (which includes Electron and Xvfb) for your region you can find some of them here:
 
- - Hosted on `eu-west-1` [nightmare-lambda-pck-with-xvfb-20170313-1726-43.zip](http://static.apptentic.com/tools/electron/nightmare-lambda-pck-with-xvfb-20170313-1726-43.zip) (58 Mb)
- - Hosted on `us-west-1` TBD
+ - Hosted on GitHub Releases (looks like `us-east-1`) [nightmare-lambda-pck-with-xvfb-20170313-1726-43.zip](https://github.com/dimkir/nightmare-lambda-tutorial/releases/download/v0.5/nightmare-lambda-pck-with-xvfb-20170313-1726-43.zip) (58 Mb)
+
+
 
 
 ## Adding virtual display framebuffer to Lambda (Xvfb)
@@ -398,8 +455,8 @@ var xvfb = new Xvfb({ xvfb_executable: '/tmp/pck/Xvfb' }); // this is location o
 ## Code sample for final solution 
 
 Now we know that in order to run Nightmare successfully as lambda function we need to:
- 1. Download the binary lambda pack
- 2. Wrap our main logic in calls to `Xvfb` 
+    1. Download the binary lambda pack
+    2. Wrap our main logic in calls to `Xvfb` 
 
 
 
