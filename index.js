@@ -20,12 +20,10 @@ console.log('Lambda executes global code upon container boot-up');
 var electronPath, binaryPack, isOnLambda, Xvfb;
 
 binaryPack = require('./lib/bootstrap/nightmare-lambda-pack');
-isOnLambda = binaryPack.isOnLambda;
 Xvfb       = require('./lib/bootstrap/xvfb');
-if ( isOnLambda ){
-    electronPath = binaryPack.installNightmare(); 
-}
 
+isOnLambda   = binaryPack.isRunningOnLambdaEnvironment;
+electronPath = binaryPack.installNightmareOnLambdaEnvironment();
 
 /** ************************************************************** */
 
@@ -50,7 +48,8 @@ exports.handler = function(event, context){
     console.log(binaryPack._df()); // let's log `df -h` current disk usage
 
     xvfb = new Xvfb({
-        xvfb_executable : '/tmp/pck/Xvfb' // path to Xvfb deployed from nightmare-lambda-pack
+        xvfb_executable : '/tmp/pck/Xvfb', // path to Xvfb deployed from nightmare-lambda-pack
+        dry_run : !isOnLambda // when not on lambda, we assume you're on desktop environment and don't need Xvfb
     })
 
     xvfb.start((err, xvfbProcess) => {
@@ -64,7 +63,8 @@ exports.handler = function(event, context){
             destBucket: DEFAULT_BUCKET_NAME, 
             destBucketRegion: DEFAULT_BUCKET_REGION, // this is used to generate full screenshot url in form http://s3-region.amazonaws.com/key/screenshot-xxxx.png,
             nightmareOptions: {
-                electronPath: electronPath
+                electronPath: electronPath,
+                show: false
             }
         });
         
