@@ -286,6 +286,25 @@ if ( isOnLambda ){
 
 // ....
 ```
+or if you have a private s3 object
+```
+const aws = require('aws-sdk'); // this is preinstalled in lambda environment;
+const s3 = new aws.S3();
+
+// ....
+
+const electronObjectParames = {Bucket: YOUR-BUCKET, Key: YOUR-BINARY-ZIP-NAME, Expires: 60};
+
+// But make sure that your lambda is permitted to make request to S3.
+if ( isOnLambda ){
+    electronPath = binaryPack.installNightmare({
+        electronPackageUrl : s3.getSignedUrl('getObject', electronObjectParames)
+    }; 
+}
+
+
+// ....
+```
 
 
   
