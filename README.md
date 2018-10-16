@@ -286,6 +286,25 @@ if ( isOnLambda ){
 
 // ....
 ```
+or if you have a private s3 object
+```
+const aws = require('aws-sdk'); // this is preinstalled in lambda environment;
+const s3 = new aws.S3();
+
+// ....
+
+const electronObjectParames = {Bucket: YOUR-BUCKET, Key: YOUR-BINARY-ZIP-NAME, Expires: 60};
+
+// But make sure that your lambda is permitted to make request to S3.
+if ( isOnLambda ){
+    electronPath = binaryPack.installNightmare({
+        electronPackageUrl : s3.getSignedUrl('getObject', electronObjectParames)
+    }; 
+}
+
+
+// ....
+```
 
 
   
@@ -451,6 +470,25 @@ var xvfb = new Xvfb({ xvfb_executable: '/tmp/pck/Xvfb' }); // this is location o
 
 ```
 
+or in asynchronous way 
+
+```js
+// ...
+
+const Xvfb = require('./lib/bootstrap/xvfb');
+const electronPath = binaryPack.installNightmareOnLambdaEnvironment();
+const myLambda = require('./myLambda');
+
+// ...
+
+exports.handler = async function(event, context){
+    const xvfbProcess = await Xvfb.startAsync();
+
+    await myLambda({xvfbProcess, electronPath});
+
+    await Xvfb.stopAsync();
+}
+```
 
 ## Code sample for final solution 
 
