@@ -451,6 +451,25 @@ var xvfb = new Xvfb({ xvfb_executable: '/tmp/pck/Xvfb' }); // this is location o
 
 ```
 
+or in asynchronous way 
+
+```js
+// ...
+
+const Xvfb = require('./lib/bootstrap/xvfb');
+const electronPath = binaryPack.installNightmareOnLambdaEnvironment();
+const myLambda = require('./myLambda');
+
+// ...
+
+exports.handler = async function(event, context){
+    const xvfbProcess = await Xvfb.startAsync();
+
+    await myLambda({xvfbProcess, electronPath});
+
+    await Xvfb.stopAsync();
+}
+```
 
 ## Code sample for final solution 
 
